@@ -4,7 +4,11 @@ ARG EMBEDDED_JAVA_VERSION=21
 FROM --platform=${BUILDPLATFORM} node:lts-alpine AS builder
 
 WORKDIR /src
-COPY . /src
+RUN apk add --no-cache git &&\
+    MCSM_VERSION=$(git ls-remote --tags --sort=-v:refname https://github.com/MCSManager/MCSManager.git | grep -oP 'v\d+\.\d+\.\d+$' | head -1) &&\
+    echo "Building MCSManager version: ${MCSM_VERSION}" &&\
+    git clone --depth 1 --branch "${MCSM_VERSION}" https://github.com/MCSManager/MCSManager.git . &&\
+    rm -rf .git
 
 RUN apk add --no-cache wget &&\
     chmod a+x ./install-dependents.sh &&\
