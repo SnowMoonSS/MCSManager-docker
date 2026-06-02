@@ -69,7 +69,7 @@ jobs:
       packages: write
     strategy:
       matrix:
-        java_version: [8, 11, 17, 21]
+        java_version: ['none', 8, 11, 17, 21]
 
     steps:
       - uses: actions/checkout@v4
@@ -79,12 +79,14 @@ jobs:
         uses: docker/metadata-action@v5
         with:
           images: |
-            name=ghcr.io/${{ github.repository_owner }}/mcsm-daemon,enable=${{ matrix.java_version == 21 }}
-            name=ghcr.io/${{ github.repository_owner }}/mcsm-daemon-jdk${{ matrix.java_version }}
+            ghcr.io/${{ github.repository_owner }}/mcsm-daemon
           tags: |
-            type=raw,value=latest
-            type=semver,pattern={{version}},value=${{ github.event.inputs.tag || github.event.client_payload.tag || github.ref_name }}
-            type=semver,pattern={{major}}.{{minor}},value=${{ github.event.inputs.tag || github.event.client_payload.tag || github.ref_name }}
+            type=raw,value=latest,enable=${{ matrix.java_version == 'none' }}
+            type=raw,value=latest,suffix=-jdk${{ matrix.java_version }},enable=${{ matrix.java_version != 'none' }}
+            type=semver,pattern={{version}},value=${{ github.event.inputs.tag || github.event.client_payload.tag || github.ref_name }},enable=${{ matrix.java_version == 'none' }}
+            type=semver,pattern={{version}},value=${{ github.event.inputs.tag || github.event.client_payload.tag || github.ref_name }},suffix=-jdk${{ matrix.java_version }},enable=${{ matrix.java_version != 'none' }}
+            type=semver,pattern={{major}}.{{minor}},value=${{ github.event.inputs.tag || github.event.client_payload.tag || github.ref_name }},enable=${{ matrix.java_version == 'none' }}
+            type=semver,pattern={{major}}.{{minor}},value=${{ github.event.inputs.tag || github.event.client_payload.tag || github.ref_name }},suffix=-jdk${{ matrix.java_version }},enable=${{ matrix.java_version != 'none' }}
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
@@ -109,5 +111,6 @@ jobs:
           labels: ${{ steps.meta_daemon.outputs.labels }}
           build-args: |
             BUILDPLATFORM=linux/amd64
-            EMBEDDED_JAVA_VERSION=${{ matrix.java_version }}
+            EMBEDDED_JAVA_VERSION=${{ matrix.java_version == 'none' && '21' || matrix.java_version }}
+            SKIP_JAVA=${{ matrix.java_version == 'none' }}
             MCSM_VERSION=${{ github.event.inputs.tag || github.event.client_payload.tag || github.ref_name }}

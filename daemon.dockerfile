@@ -1,5 +1,6 @@
 ARG BUILDPLATFORM=linux/amd64
 ARG EMBEDDED_JAVA_VERSION=21
+ARG SKIP_JAVA=false
 
 FROM --platform=${BUILDPLATFORM} node:lts-alpine AS builder
 
@@ -23,9 +24,13 @@ FROM eclipse-temurin:${EMBEDDED_JAVA_VERSION} AS temurin-stage
 
 FROM ghcr.io/linuxserver/baseimage-debian:trixie
 
+ARG SKIP_JAVA
 ENV JAVA_HOME=/opt/java/openjdk
 COPY --from=temurin-stage $JAVA_HOME $JAVA_HOME
-ENV PATH="${JAVA_HOME}/bin:${PATH}"
+
+RUN if [ "${SKIP_JAVA}" = "true" ]; then \
+      rm -rf $JAVA_HOME; \
+    fi
 
 RUN apt-get update && apt-get install -y curl &&\
     curl -fsSL https://deb.nodesource.com/setup_20.x | bash &&\
@@ -38,5 +43,6 @@ COPY daemon /
 EXPOSE 24444
 
 ENV MCSM_INSTANCES_BASE_PATH=/opt/mcsmanager/daemon/data/InstanceData
+ENV PATH="${JAVA_HOME}/bin:${PATH}"
 
 VOLUME ["/opt/mcsmanager/daemon/data", "/opt/mcsmanager/daemon/logs"]
