@@ -1,16 +1,8 @@
 name: Release Docker Build
 
 on:
-  workflow_dispatch:
-    inputs:
-      tag:
-        description: 'MCSManager release tag (e.g., v1.2.3)'
-        required: true
-        type: string
-  repository_dispatch:
-    types: [release]
   release:
-    types: [published, prereleased]
+    types: [published]
 
 jobs:
   build-web:
