@@ -29,7 +29,7 @@ RUN apt-get update && apt-get install -y curl wget apt-transport-https gpg &&\
     curl -fsSL https://deb.nodesource.com/setup_24.x | bash &&\
     apt-get update && apt-get install -y nodejs &&\
     if [ "${EMBEDDED_JAVA_VERSION}" != "none" ] && [ -n "${EMBEDDED_JAVA_VERSION}" ]; then \
-      apt-get install -y "temurin-${EMBEDDED_JAVA_VERSION}-jre-headless"; \
+      apt-get install -y "temurin-${EMBEDDED_JAVA_VERSION}-jre"; \
     fi &&\
     apt-get clean && rm -rf /var/lib/apt/lists/*
 
