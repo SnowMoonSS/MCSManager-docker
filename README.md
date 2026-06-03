@@ -248,18 +248,20 @@ services:
       - PGID=1000
       - TZ=Asia/Shanghai
       - MCSM_DOCKER_WORKSPACE_PATH=./daemon/data/InstanceData
+      # - DOCKER_HOST=unix:///run/user/1000/docker.sock # 如果你的主机使用的是 rootless docker，且打算使用 docker 运行你的应用
     ports:
       - "24444:24444"
     volumes:
       - ./daemon/data:/opt/mcsmanager/daemon/data
       - ./daemon/logs:/opt/mcsmanager/daemon/logs
-      # - /var/run/docker.sock:/var/run/docker.sock  # Docker 容器管理所需
+      # - /var/run/docker.sock:/var/run/docker.sock  # 如果你打算使用 docker 运行你的应用
+      # - /run/user/1000/docker.sock:/run/user/1000/docker.sock # 如果你的主机使用的是 rootless docker，且打算使用 docker 运行你的应用
     restart: unless-stopped
 ```
 
 > [!CAUTION]
 > 将 `/var/run/docker.sock` 挂载到容器内是十分危险的行为。
-> Docker socket 的本质等同于宿主机 root 权限。容器内任何获得 abc 用户权限的攻击者，都可以通过 Docker socket 逃逸到宿主机并执行任意命令。MCSManager 作为游戏服务器管理面板本身就允许用户执行任意命令（启动 Minecraft/Steam 服务器），这个风险被放大。
+> Docker socket 的本质等同于宿主机 root 权限。容器内任何获得 abc 用户权限的攻击者，都可以通过 Docker socket 逃逸到宿主机并执行任意命令。
 
 > 启动后请在 Web 面板中手动添加 Daemon 节点进行连接（Docker 环境下不会自动连接）。
 
