@@ -200,15 +200,13 @@ LinuxServer 的三层扩展体系（Scripts → Services → Mods）使得在不
 
 ### 本项目（MCSManager-lsio）的缺点
 
-1. **镜像体积较大**：LinuxServer 基础镜像比 `node:lts-alpine` 多出数十 MB 的 init 系统和工具集。Daemon 端因基于 Debian 差异更明显。仍将为缩小镜像体积努力。
+1. **增加学习成本**：用户需要理解 PUID/PGID 的概念。相比官方 "pull & run" 的路径，多了一个概念需要了解。
 
-2. **增加学习成本**：用户需要理解 PUID/PGID 的概念。相比官方 "pull & run" 的路径，多了一个概念需要了解。
+2. **非官方维护**：本项目不是 MCSManager 官方团队维护，版本跟进可能存在延迟。
 
-3. **非官方维护**：本项目不是 MCSManager 官方团队维护，版本跟进可能存在延迟。
+3. **首次冷启动较慢**：需要额外拉取 LSIO 基础镜像层。
 
-4. **首次冷启动较慢**：需要额外拉取 LSIO 基础镜像层。
-
-5. **/config 惯例部分不适用**：MCSManager 不使用 `/config` 路径（数据在 `data/` 和 `logs/` 下），LSIO 的 `/config` 标准化理念在本项目中未被完全利用。
+4. **/config 惯例部分不适用**：MCSManager 不使用 `/config` 路径（数据在 `data/` 和 `logs/` 下），LSIO 的 `/config` 标准化理念在本项目中未被完全利用。
 
 ---
 
