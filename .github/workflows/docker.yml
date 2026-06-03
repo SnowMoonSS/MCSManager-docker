@@ -70,7 +70,7 @@ jobs:
       packages: write
     strategy:
       matrix:
-        java_version: ['none', 8, 11, 17, 21]
+        java_version: ['none', 8, 11, 17, 21, 25]
 
     steps:
       - uses: actions/checkout@v4
@@ -114,6 +114,5 @@ jobs:
           labels: ${{ steps.meta_daemon.outputs.labels }}
           build-args: |
             BUILDPLATFORM=linux/amd64
-            EMBEDDED_JAVA_VERSION=${{ matrix.java_version == 'none' && '21' || matrix.java_version }}
-            SKIP_JAVA=${{ matrix.java_version == 'none' }}
+            EMBEDDED_JAVA_VERSION=${{ matrix.java_version }}
             MCSM_VERSION=${{ github.event.inputs.tag || github.event.client_payload.tag || github.ref_name }}
