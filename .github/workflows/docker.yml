@@ -68,9 +68,6 @@ jobs:
     permissions:
       contents: read
       packages: write
-    strategy:
-      matrix:
-        java_version: ['none', 8, 11, 17, 21, 25]
 
     steps:
       - uses: actions/checkout@v4
@@ -82,14 +79,10 @@ jobs:
           images: |
             ghcr.io/${{ github.repository_owner }}/mcsm-daemon
           tags: |
-            type=raw,value=latest,enable=${{ matrix.java_version == 'none' }}
-            type=raw,value=latest,suffix=-jre${{ matrix.java_version }},enable=${{ matrix.java_version != 'none' }}
-            type=semver,pattern={{version}},value=${{ github.event.inputs.tag || github.event.client_payload.tag || github.ref_name }},enable=${{ matrix.java_version == 'none' }}
-            type=semver,pattern={{version}},value=${{ github.event.inputs.tag || github.event.client_payload.tag || github.ref_name }},suffix=-jre${{ matrix.java_version }},enable=${{ matrix.java_version != 'none' }}
-            type=semver,pattern={{major}}.{{minor}},value=${{ github.event.inputs.tag || github.event.client_payload.tag || github.ref_name }},enable=${{ matrix.java_version == 'none' }}
-            type=semver,pattern={{major}}.{{minor}},value=${{ github.event.inputs.tag || github.event.client_payload.tag || github.ref_name }},suffix=-jre${{ matrix.java_version }},enable=${{ matrix.java_version != 'none' }}
-            type=semver,pattern={{major}},value=${{ github.event.inputs.tag || github.event.client_payload.tag || github.ref_name }},enable=${{ matrix.java_version == 'none' }}
-            type=semver,pattern={{major}},value=${{ github.event.inputs.tag || github.event.client_payload.tag || github.ref_name }},suffix=-jre${{ matrix.java_version }},enable=${{ matrix.java_version != 'none' }}
+            type=raw,value=latest
+            type=semver,pattern={{version}},value=${{ github.event.inputs.tag || github.event.client_payload.tag || github.ref_name }}
+            type=semver,pattern={{major}}.{{minor}},value=${{ github.event.inputs.tag || github.event.client_payload.tag || github.ref_name }}
+            type=semver,pattern={{major}},value=${{ github.event.inputs.tag || github.event.client_payload.tag || github.ref_name }}
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
@@ -112,6 +105,56 @@ jobs:
           platforms: linux/amd64,linux/arm64
           tags: ${{ steps.meta_daemon.outputs.tags }}
           labels: ${{ steps.meta_daemon.outputs.labels }}
+          build-args: |
+            BUILDPLATFORM=linux/amd64
+            EMBEDDED_JAVA_VERSION=none
+            MCSM_VERSION=${{ github.event.inputs.tag || github.event.client_payload.tag || github.ref_name }}
+
+  build-daemon-jre:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      matrix:
+        java_version: [8, 11, 17, 21, 25]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Docker meta daemon JRE
+        id: meta_daemon_jre
+        uses: docker/metadata-action@v5
+        with:
+          images: |
+            ghcr.io/${{ github.repository_owner }}/mcsm-daemon
+          tags: |
+            type=raw,value=latest,suffix=-jre${{ matrix.java_version }}
+            type=semver,pattern={{version}},value=${{ github.event.inputs.tag || github.event.client_payload.tag || github.ref_name }},suffix=-jre${{ matrix.java_version }}
+            type=semver,pattern={{major}}.{{minor}},value=${{ github.event.inputs.tag || github.event.client_payload.tag || github.ref_name }},suffix=-jre${{ matrix.java_version }}
+            type=semver,pattern={{major}},value=${{ github.event.inputs.tag || github.event.client_payload.tag || github.ref_name }},suffix=-jre${{ matrix.java_version }}
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to ghcr.io
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and Push Daemon JRE
+        uses: docker/build-push-action@v6
+        with:
+          file: daemon.dockerfile
+          push: true
+          platforms: linux/amd64,linux/arm64
+          tags: ${{ steps.meta_daemon_jre.outputs.tags }}
+          labels: ${{ steps.meta_daemon_jre.outputs.labels }}
           build-args: |
             BUILDPLATFORM=linux/amd64
             EMBEDDED_JAVA_VERSION=${{ matrix.java_version }}
