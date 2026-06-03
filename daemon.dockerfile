@@ -1,6 +1,5 @@
 ARG BUILDPLATFORM=linux/amd64
-ARG EMBEDDED_JAVA_VERSION=21
-ARG SKIP_JAVA=false
+ARG EMBEDDED_JAVA_VERSION=none
 
 FROM --platform=${BUILDPLATFORM} node:lts-alpine AS builder
 
@@ -20,21 +19,19 @@ RUN apk add --no-cache wget &&\
     wget --input-file=lib-urls.txt --directory-prefix=production-code/daemon/lib/ &&\
     chmod a+x production-code/daemon/lib/*
 
-FROM eclipse-temurin:${EMBEDDED_JAVA_VERSION} AS temurin-stage
-
 FROM ghcr.io/linuxserver/baseimage-debian:trixie
 
-ARG SKIP_JAVA
-ENV JAVA_HOME=/opt/java/openjdk
-COPY --from=temurin-stage $JAVA_HOME $JAVA_HOME
+ARG EMBEDDED_JAVA_VERSION
 
-RUN if [ "${SKIP_JAVA}" = "true" ]; then \
-      rm -rf $JAVA_HOME; \
-    fi
-
-RUN apt-get update && apt-get install -y curl &&\
-    curl -fsSL https://deb.nodesource.com/setup_20.x | bash &&\
-    apt-get update && apt-get install -y nodejs && apt-get clean
+RUN apt-get update && apt-get install -y curl wget apt-transport-https gpg &&\
+    wget -qO - https://packages.adoptium.net/artifactory/api/gpg/key/public | gpg --dearmor | tee /etc/apt/trusted.gpg.d/adoptium.gpg > /dev/null &&\
+    echo "deb https://packages.adoptium.net/artifactory/deb $(awk -F= '/^VERSION_CODENAME/{print$2}' /etc/os-release) main" | tee /etc/apt/sources.list.d/adoptium.list &&\
+    curl -fsSL https://deb.nodesource.com/setup_24.x | sudo -E bash - &&\
+    apt-get update && apt-get install -y nodejs &&\
+    if [ "${EMBEDDED_JAVA_VERSION}" != "none" ] && [ -n "${EMBEDDED_JAVA_VERSION}" ]; then \
+      apt-get install -y "temurin-${EMBEDDED_JAVA_VERSION}-jre-headless"; \
+    fi &&\
+    apt-get clean && rm -rf /var/lib/apt/lists/*
 
 COPY --from=builder /src/production-code/daemon/ /opt/mcsmanager/daemon/
 
@@ -43,6 +40,5 @@ COPY daemon /
 EXPOSE 24444
 
 ENV MCSM_INSTANCES_BASE_PATH=/opt/mcsmanager/daemon/data/InstanceData
-ENV PATH="${JAVA_HOME}/bin:${PATH}"
 
 VOLUME ["/opt/mcsmanager/daemon/data", "/opt/mcsmanager/daemon/logs"]
