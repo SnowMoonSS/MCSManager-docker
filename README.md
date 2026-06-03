@@ -244,7 +244,7 @@ services:
       - PUID=1000
       - PGID=1000
       - TZ=Asia/Shanghai
-      - MCSM_INSTANCES_BASE_PATH=/opt/mcsmanager/daemon/data/InstanceData
+      - MCSM_INSTANCES_BASE_PATH=./daemon/data/InstanceData
     ports:
       - "24444:24444"
     volumes:
