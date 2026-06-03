@@ -126,6 +126,8 @@ jobs:
         id: meta_daemon_jre
         uses: docker/metadata-action@v5
         with:
+          flavor: |
+            latest=false
           images: |
             ghcr.io/${{ github.repository_owner }}/mcsm-daemon
           tags: |
